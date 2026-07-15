@@ -9,6 +9,8 @@ export default async function dbConnect(
       autoCreate: true,
     });
 
+    console.log('MongoDB connected successfully');
+
     return connection;
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);

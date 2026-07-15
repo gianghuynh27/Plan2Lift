@@ -3,6 +3,8 @@ import dbConnect from './db/db-connect';
 
 import config from './config/config';
 
+console.log('config =', config);
+
 dbConnect(config.mongoUri).then(() => {
   const server = app.listen(config.port, () => {
     console.log(`Server is running on port ${config.port}`);

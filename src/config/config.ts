@@ -17,7 +17,7 @@ interface IConfig {
 }
 
 const config: IConfig = {
-  port: parseInt(process.env.PORT || '5000', 10),
+  port: parseInt(process.env.PORT || '8000', 10),
   appMode: (process.env.APP_MODE as 'DEV' | 'STAGING' | 'PROD') || 'DEV',
   mongoUri:
     process.env[`${process.env.APP_MODE}_MONGO_URI`] ||
