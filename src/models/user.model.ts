@@ -2,16 +2,16 @@ import { model, Schema, Document, Model } from 'mongoose';
 
 interface IUser extends Document {
   username: string;
-  password: string;
+  passwordHash: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
 }
 
-const userSchema = new Schema(
+const userSchema = new Schema<IUser>(
   {
     username: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    passwordHash: { type: String, required: true, select: false },
     deletedAt: {
       type: Date,
       default: null,
@@ -22,6 +22,6 @@ const userSchema = new Schema(
   },
 );
 
-const User: Model<IUser> = model<IUser>('user', userSchema);
+const User: Model<IUser> = model<IUser>('User', userSchema);
 
 export default User;
