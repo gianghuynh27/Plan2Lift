@@ -3,7 +3,7 @@ import { model, Schema, Document, Model } from 'mongoose';
 interface IUser extends Document {
   username: string;
   email: string;
-  passwordHash: string;
+  password: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -19,7 +19,7 @@ const userSchema = new Schema<IUser>(
       trim: true,
       lowercase: true,
     },
-    passwordHash: { type: String, required: true, select: false },
+    password: { type: String, required: true, select: false },
     deletedAt: {
       type: Date,
       default: null,
