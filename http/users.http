@@ -1,12 +1,14 @@
 @baseUrl=http://localhost:8000/api/v1/users
+@accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTY2Y2NiNDQ4YzUzMWYwMDM4ODBhY2IiLCJ1c2VybmFtZSI6ImpvaG4iLCJlbWFpbCI6ImpvaG5AYXBwbGUuc2VlZCIsImlhdCI6MTc4NTEyMjcxNSwiZXhwIjoxNzg1MTI2MzE1fQ.s1iLLTMxwves_PpsPF4iUhVRizj77UKqMI593Gwj5-w
 
 ### create user
 POST {{baseUrl}}
 Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
-  "username": "test2",
-  "email": "test2@test.test",
+  "username": "test4",
+  "email": "test4@test.test",
   "password": "123456s*"
 }
 

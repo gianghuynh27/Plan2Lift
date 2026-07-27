@@ -3,20 +3,54 @@ import { Model } from 'mongoose';
 import _ from 'lodash';
 
 import logger from '../logs/logger';
+import jwtUtils from '../utils/jwt.utils';
+import appRegistry from '../app.registry';
 
 class BaseController {
   model: Model<any>;
   logger: typeof logger;
   _: typeof _;
+  jwt: typeof jwtUtils;
+  registry: typeof appRegistry;
 
   constructor(model: Model<any>) {
     this.model = model;
     this.logger = logger;
     this._ = _;
+    this.jwt = jwtUtils;
+    this.registry = appRegistry;
   }
 
   async create(req: Request, res: Response) {
     try {
+      // move logic to middleware - start
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        res.status(401).json({
+          message: 'Unauthorized: No token provided',
+        });
+      }
+      const token = authHeader?.slice(7); // remove Bearer prefix
+      // "Bearer <token>"
+      if (!token) {
+        res.status(401).json({
+          message: 'Unauthorized: No token provided',
+        });
+      }
+
+      const decode = this.jwt.verifyAccessToken(token as string);
+      if (!decode) {
+        res.status(401).json({
+          message: 'Unauthorized: Invalid token',
+        });
+      }
+
+      this.logger.info('decode =', decode);
+
+      // req.meta.user = decode
+
+      // move logic to middleware - end
+
       const data = {
         ...req.body,
       };

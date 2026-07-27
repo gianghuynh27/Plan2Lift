@@ -4,6 +4,15 @@ import { usersController } from '../../../controllers';
 
 const router = Router();
 
+router.use((req, res, next) => {
+  // Add any middleware logic here if needed
+  // add express defigintion in express.d.ts to avoid typescript error
+  // req.meta.user = {
+  //   "testing": "test"
+  // }
+  next();
+});
+
 router
   .route('/')
   .get(usersController.list.bind(usersController))
