@@ -30,14 +30,6 @@ const userSchema = new Schema<IUser>(
   },
 );
 
-userSchema.pre('save', async function () {
-  if (this.isModified('password')) {
-    // hash password
-    this.password = 'SA' + this.password + 'LT';
-    // use bcrypt or sha256
-  }
-});
-
 const User: Model<IUser> = model<IUser>('User', userSchema);
 
 export default User;

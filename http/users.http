@@ -1,5 +1,5 @@
 @baseUrl=http://localhost:8000/api/v1/users
-@accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTY2Y2NiNDQ4YzUzMWYwMDM4ODBhY2IiLCJ1c2VybmFtZSI6ImpvaG4iLCJlbWFpbCI6ImpvaG5AYXBwbGUuc2VlZCIsImlhdCI6MTc4NTEyMjcxNSwiZXhwIjoxNzg1MTI2MzE1fQ.s1iLLTMxwves_PpsPF4iUhVRizj77UKqMI593Gwj5-w
+@accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTZlODBkOGZjMTQ4NGU2ZGE0ZmZjOWUiLCJ1c2VybmFtZSI6ImFkYW0iLCJlbWFpbCI6ImFkYW1AYXBwbGUuc2VlZCIsImlhdCI6MTc4NTYyNjg0MCwiZXhwIjoxNzg1NjMwNDQwfQ.eS56aFPIs9xDUsWY7Rr__Zp7kNmU53y2C9tL8ejwPTY
 
 ### create user
 POST {{baseUrl}}
@@ -14,7 +14,11 @@ Authorization: Bearer {{accessToken}}
 
 ### list users
 GET {{baseUrl}}?page=1&limit=2&email=test2@test.test
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 ### get by _id
 GET {{baseUrl}}/6a66bdf50f8b86209894d146
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 

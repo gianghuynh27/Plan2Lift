@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 
 import BaseController from './base.controller';
 import AuthToken from '../models/auth-token.model';
+import { hashPassword, verifyPassword } from '../utils/auth.util';
 
 class AuthController extends BaseController {
   constructor() {
@@ -10,9 +11,13 @@ class AuthController extends BaseController {
 
   async register(req: Request, res: Response) {
     const { username, email, password } = req.body;
-    const userModel = this.registry.get('user:model');
-    const user = new userModel({ username, email, password });
 
+    const userModel = this.registry.get('user:model');
+    const user = new userModel({
+      username,
+      email,
+      password: await hashPassword(password),
+    });
     const savedUser = await user.save();
 
     const tokens = this.jwt.createTokens({
@@ -40,10 +45,11 @@ class AuthController extends BaseController {
     const { email, password } = req.body;
 
     const userModel = this.registry.get('user:model');
-    const user = await userModel.findOne({
-      email: email,
-      password: 'SA' + password + 'LT',
-    });
+    const user = await userModel
+      .findOne({
+        email: email,
+      })
+      .select('+password');
 
     if (!user) {
       return res.status(401).json({
@@ -51,6 +57,13 @@ class AuthController extends BaseController {
       });
     }
 
+    const isMatch = await verifyPassword(password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        message: 'Invalid email or password',
+      });
+    }
     const tokens = this.jwt.createTokens({
       userId: user._id,
       username: user.username,

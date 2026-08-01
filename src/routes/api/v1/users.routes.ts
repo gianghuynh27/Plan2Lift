@@ -1,17 +1,11 @@
 import { Router } from 'express';
 
 import { usersController } from '../../../controllers';
+import { requireAuth } from '../../../middleware/auth.middleware';
 
 const router = Router();
 
-router.use((req, res, next) => {
-  // Add any middleware logic here if needed
-  // add express defigintion in express.d.ts to avoid typescript error
-  // req.meta.user = {
-  //   "testing": "test"
-  // }
-  next();
-});
+router.use(requireAuth);
 
 router
   .route('/')

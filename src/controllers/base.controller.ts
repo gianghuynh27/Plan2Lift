@@ -23,34 +23,7 @@ class BaseController {
 
   async create(req: Request, res: Response) {
     try {
-      // move logic to middleware - start
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        res.status(401).json({
-          message: 'Unauthorized: No token provided',
-        });
-      }
-      const token = authHeader?.slice(7); // remove Bearer prefix
-      // "Bearer <token>"
-      if (!token) {
-        res.status(401).json({
-          message: 'Unauthorized: No token provided',
-        });
-      }
-
-      const decode = this.jwt.verifyAccessToken(token as string);
-      if (!decode) {
-        res.status(401).json({
-          message: 'Unauthorized: Invalid token',
-        });
-      }
-
-      this.logger.info('decode =', decode);
-
-      // req.meta.user = decode
-
-      // move logic to middleware - end
-
+      //Maybe add authRequireAuth middleware to this route to ensure that only authenticated users can create documents. This will help prevent unauthorized access and potential security risks.
       const data = {
         ...req.body,
       };
