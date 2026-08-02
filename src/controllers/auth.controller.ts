@@ -41,12 +41,18 @@ class AuthController extends BaseController {
       } catch (error) {
         if (isDuplicateKeyError(error)) {
           const duplicateField = Object.keys(error.keyPattern ?? {})[0];
+
+          this.logger.warn('Registration rejected: duplicate account field', {
+            duplicateField: duplicateField ?? 'unknown',
+          });
+
           const message =
             duplicateField === 'username'
               ? 'That username is already in use'
               : duplicateField === 'email'
                 ? 'That email is already in use'
                 : 'That username or email is already in use';
+
           return res.status(409).json({ message });
         }
         throw error;
@@ -65,6 +71,10 @@ class AuthController extends BaseController {
 
       await authToken.save();
 
+      this.logger.info('User registered successfully', {
+        userId: savedUser._id.toString(),
+      });
+
       res.status(201).json({
         message: 'User registered successfully',
         tokens: {
@@ -73,7 +83,7 @@ class AuthController extends BaseController {
         },
       });
     } catch (error) {
-      console.error('Registration failed:', error);
+      this.logger.error('Registration failed:', { error });
 
       return res.status(500).json({
         message: 'Unable to register user',
@@ -81,57 +91,73 @@ class AuthController extends BaseController {
     }
   }
   async login(req: Request, res: Response) {
-    const { email, password } = req.body;
+    try {
+      const { email, password } = req.body;
+      const userModel = this.registry.get('user:model');
 
-    const userModel = this.registry.get('user:model');
-    const user = await userModel
-      .findOne({
-        email: email.trim().toLowerCase(),
-      })
-      .select('+password');
+      const user = await userModel
+        .findOne({
+          email: email.trim().toLowerCase(),
+        })
+        .select('+password');
 
-    if (!user) {
-      return res.status(401).json({
-        message: 'Invalid email or password',
+      if (!user) {
+        this.logger.warn('Login rejected: invalid credentials');
+
+        return res.status(401).json({
+          message: 'Invalid email or password',
+        });
+      }
+
+      const isMatch = await verifyPassword(password, user.password);
+
+      if (!isMatch) {
+        this.logger.warn('Login rejected: invalid credentials');
+
+        return res.status(401).json({
+          message: 'Invalid email or password',
+        });
+      }
+      const tokens = this.jwt.createTokens({
+        userId: user._id,
+        username: user.username,
+        email: user.email,
       });
-    }
 
-    const isMatch = await verifyPassword(password, user.password);
+      const findToken = await this.model.findOne({ userId: user._id });
 
-    if (!isMatch) {
-      return res.status(401).json({
-        message: 'Invalid email or password',
+      if (findToken) {
+        await this.model.findByIdAndUpdate(findToken._id, {
+          $set: {
+            refreshToken: tokens.refreshToken,
+          },
+        });
+      } else {
+        const authToken = new this.model({
+          userId: user._id,
+          refreshToken: tokens.refreshToken,
+        });
+        await authToken.save();
+      }
+
+      this.logger.info('User logged in successfully', {
+        userId: user._id.toString(),
       });
-    }
-    const tokens = this.jwt.createTokens({
-      userId: user._id,
-      username: user.username,
-      email: user.email,
-    });
 
-    const findToken = await this.model.findOne({ userId: user._id });
-
-    if (findToken) {
-      await this.model.findByIdAndUpdate(findToken._id, {
-        $set: {
+      res.status(200).json({
+        message: 'User logged in successfully',
+        tokens: {
+          accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
         },
       });
-    } else {
-      const authToken = new this.model({
-        userId: user._id,
-        refreshToken: tokens.refreshToken,
-      });
-      await authToken.save();
-    }
+    } catch (error) {
+      this.logger.error('Login failed:', { error });
 
-    res.status(200).json({
-      message: 'User logged in successfully',
-      tokens: {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      },
-    });
+      return res.status(500).json({
+        message: 'Unable to login user',
+      });
+    }
   }
   // async refresh() {}
   // async logout() {}
