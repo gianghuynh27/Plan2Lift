@@ -5,19 +5,14 @@ import { requireAuth } from '../../../middleware/auth.middleware';
 
 const router = Router();
 
-router.use(requireAuth);
-
-router
-  .route('/')
-  .get(usersController.list.bind(usersController))
-  .post(usersController.create.bind(usersController));
+//router.route('/').get(usersController.list.bind(usersController));
 
 // add custom routes here
-
-router
-  .route('/:_id')
-  .get(usersController.getById.bind(usersController))
-  .put(usersController.update.bind(usersController))
-  .delete(usersController.delete.bind(usersController));
+router.get('/me', requireAuth, usersController.getMe.bind(usersController));
+// router
+//   .route('/:_id')
+//   .get(usersController.getById.bind(usersController))
+//   .put(usersController.update.bind(usersController))
+//   .delete(usersController.delete.bind(usersController));
 
 export default router;

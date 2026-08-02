@@ -1,6 +1,7 @@
 @baseUrl=http://localhost:8000/api/v1/users
 @accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTZlODBkOGZjMTQ4NGU2ZGE0ZmZjOWUiLCJ1c2VybmFtZSI6ImFkYW0iLCJlbWFpbCI6ImFkYW1AYXBwbGUuc2VlZCIsImlhdCI6MTc4NTYyNjg0MCwiZXhwIjoxNzg1NjMwNDQwfQ.eS56aFPIs9xDUsWY7Rr__Zp7kNmU53y2C9tL8ejwPTY
 
+
 ### create user
 POST {{baseUrl}}
 Content-Type: application/json
