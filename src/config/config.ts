@@ -14,6 +14,10 @@ interface IConfig {
   smtpPort: number;
   smtpUser: string;
   smtpPass: string;
+  smtpFrom: string;
+  appPublicUrl: string;
+  emailVerificationTtlMinutes: number;
+  emailVerificationResendCooldownSeconds: number;
 }
 
 const config: IConfig = {
@@ -29,8 +33,20 @@ const config: IConfig = {
   refreshTokenTtl: process.env.REFRESH_TOKEN_TTL || '7d',
   smtpHost: process.env.SMTP_HOST || 'smtp.example.com',
   smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
-  smtpUser: process.env.SMTP_USER || '',
-  smtpPass: process.env.SMTP_PASS || '',
+  smtpUser: process.env.SMTP_EMAIL || '',
+  smtpPass: process.env.SMTP_APP_SPECIFIC_PASSWORD || '',
+  smtpFrom: process.env.SMTP_FROM || 'Plan2Lift <no-reply@plan2lift.com>',
+  appPublicUrl:
+    process.env.APP_PUBLIC_URL ||
+    `http://localhost:${process.env.PORT} || '8000`,
+  emailVerificationTtlMinutes: parseInt(
+    process.env.EMAIL_VERIFICATION_TTL_MINUTES || '1440',
+    10,
+  ),
+  emailVerificationResendCooldownSeconds: parseInt(
+    process.env.EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS || '60',
+    10,
+  ),
 };
 
 export default config;

@@ -4,6 +4,7 @@ interface IUser extends Document {
   username: string;
   email: string;
   password: string;
+  isVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -20,6 +21,10 @@ const userSchema = new Schema<IUser>(
       lowercase: true,
     },
     password: { type: String, required: true, select: false },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
     deletedAt: {
       type: Date,
       default: null,

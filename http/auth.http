@@ -18,3 +18,14 @@ Content-Type: application/json
   "email": "adam@apple.seed",
   "password": "12345678"
 }
+
+### verify email
+GET {{baseUrl}}/verify-email?token=TOKEN_FROM_EMAIL
+
+### resend verification email
+POST {{baseUrl}}/resend-verification
+Content-Type: application/json
+
+{
+  "email": "adam@apple.seed"
+}
