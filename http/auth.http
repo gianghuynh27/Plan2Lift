@@ -27,5 +27,18 @@ POST {{baseUrl}}/resend-verification
 Content-Type: application/json
 
 {
-  "email": "adam@apple.seed"
+  "email": "hhgiang2000@gmail.com"
 }
+
+### Send verification email
+POST {{baseUrl}}/send-verification
+Content-Type: application/json
+
+{
+  "email": "hhgiang2000@gmail.com",
+  "userId": "6a7a7848ef0b830e0d82f6e1"
+}
+
+
+### check duplicate
+GET {{baseUrl}}/duplicate/username?value=test123

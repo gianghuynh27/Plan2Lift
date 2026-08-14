@@ -276,6 +276,40 @@ class AuthController extends BaseController {
   // async logout() {}
 
   // async forgotPassword() {}
+
+  async checkDuplicate(req: Request, res: Response) {
+    try {
+      const duplicateType = req.params.type as 'username' | 'email';
+      const duplicateValue = req.query.value as string;
+
+      const userModel = this.registry.get('user:model');
+
+      const isDuplicate = await userModel.exists({
+        [duplicateType]: duplicateValue,
+      });
+
+      if (isDuplicate) throw new Error('Duplicate found');
+
+      res.status(200).json({
+        message: `${req.params.type} is available`,
+        duplicate: false,
+      });
+    } catch (error) {
+      this.logger.error('Duplicate check failed', {
+        error,
+      });
+
+      if (error instanceof Error && error.message === 'Duplicate found') {
+        return res.status(409).json({
+          message: `${req.params.type} is already in use`,
+        });
+      }
+
+      res.status(500).json({
+        message: 'Unable to check for duplicates',
+      });
+    }
+  }
 }
 
 const authController = new AuthController();

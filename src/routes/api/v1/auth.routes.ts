@@ -29,4 +29,9 @@ router.post(
   authController.resendVerification.bind(authController),
 );
 
+router.get(
+  '/duplicate/:type',
+  authController.checkDuplicate.bind(authController),
+);
+
 export default router;
