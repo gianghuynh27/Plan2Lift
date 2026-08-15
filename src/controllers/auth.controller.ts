@@ -88,30 +88,6 @@ class AuthController extends BaseController {
           : 'User registered successfully, but the verification email could not be sent. Please request another verification email.',
         emailSent,
       });
-      // const tokens = this.jwt.createTokens({
-      //   userId: savedUser._id,
-      //   username: savedUser.username,
-      //   email: savedUser.email,
-      // });
-
-      // const authToken = new this.model({
-      //   userId: savedUser._id,
-      //   refreshToken: tokens.refreshToken,
-      // });
-
-      // await authToken.save();
-
-      // this.logger.info('User registered successfully', {
-      //   userId: savedUser._id.toString(),
-      // });
-
-      // res.status(201).json({
-      //   message: 'User registered successfully',
-      //   tokens: {
-      //     accessToken: tokens.accessToken,
-      //     refreshToken: tokens.refreshToken,
-      //   },
-      // });
     } catch (error) {
       this.logger.error('Registration failed:', { error });
 

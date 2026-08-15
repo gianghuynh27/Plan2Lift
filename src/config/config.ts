@@ -38,7 +38,7 @@ const config: IConfig = {
   smtpFrom: process.env.SMTP_FROM || 'Plan2Lift <no-reply@plan2lift.com>',
   appPublicUrl:
     process.env.APP_PUBLIC_URL ||
-    `http://localhost:${process.env.PORT} || '8000`,
+    `http://localhost:${process.env.PORT || '8000'}`,
   emailVerificationTtlMinutes: parseInt(
     process.env.EMAIL_VERIFICATION_TTL_MINUTES || '1440',
     10,

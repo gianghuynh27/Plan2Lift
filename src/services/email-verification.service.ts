@@ -76,7 +76,12 @@ class EmailVerificationService {
         verificationUrl.toString(),
       );
     } catch (error) {
+      logger.log(
+        'Info',
+        `Failed to send verification email to ${email} for userId: ${userId}`,
+      );
       logger.error('Failed to send verification email', error);
+      throw error;
     }
   }
   async verifyEmail(token: string): Promise<boolean> {
