@@ -63,10 +63,10 @@ class EmailVerificationService {
           setDefaultsOnInsert: true,
         },
       );
-
+      // Url points to front-end verification page and front-end calls vefic
       const verificationUrl = new URL(
-        '/api/v1/auth/verify-email',
-        config.appPublicUrl,
+        '/auth/verify-email',
+        config.clientPublicUrl,
       );
 
       verificationUrl.searchParams.set('token', token);
