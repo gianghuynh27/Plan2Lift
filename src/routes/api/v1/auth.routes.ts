@@ -17,7 +17,7 @@ router.post(
 );
 router.post('/login', validateLogin, authController.login.bind(authController));
 
-router.get(
+router.post(
   '/verify-email',
   validateVerificationToken,
   authController.verifyEmail.bind(authController),

@@ -27,6 +27,7 @@ class EmailVerificationService {
     email,
     enforceCooldown = false,
   }: SendVerificationEmailInput): Promise<void> {
+    let createdTokenHash: string | null = null;
     try {
       if (enforceCooldown) {
         const cooldownStart = new Date(
@@ -46,6 +47,7 @@ class EmailVerificationService {
       }
       const token = generateVerificationToken();
       const tokenHash = hashVerificationToken(token);
+      createdTokenHash = tokenHash;
       const expiresAt = new Date(
         Date.now() + config.emailVerificationTtlMinutes * 60 * 1000,
       );
@@ -76,11 +78,20 @@ class EmailVerificationService {
         verificationUrl.toString(),
       );
     } catch (error) {
-      logger.log(
-        'Info',
-        `Failed to send verification email to ${email} for userId: ${userId}`,
-      );
-      logger.error('Failed to send verification email', error);
+      if (createdTokenHash) {
+        try {
+          await EmailVerificationToken.deleteOne({
+            userId,
+            tokenHash: createdTokenHash,
+          });
+        } catch (cleanupError) {
+          logger.error('Failed to clean up verification token', {
+            userId,
+            error: cleanupError,
+          });
+        }
+      }
+      logger.error('Failed to send verification email', { userId, error });
       throw error;
     }
   }
