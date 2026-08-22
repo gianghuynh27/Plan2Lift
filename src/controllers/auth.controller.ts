@@ -177,7 +177,7 @@ class AuthController extends BaseController {
   }
   async verifyEmail(req: Request, res: Response) {
     try {
-      const token = req.query.token as string;
+      const { token } = req.body;
 
       const verified = await emailVerificationService.verifyEmail(token);
 

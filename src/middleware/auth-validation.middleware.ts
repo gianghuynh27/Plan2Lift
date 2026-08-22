@@ -107,7 +107,7 @@ export function validateVerificationToken(
   res: Response,
   next: NextFunction,
 ) {
-  const { token } = req.query;
+  const { token } = req.body;
 
   if (typeof token !== 'string' || token.length < 32 || token.length > 256) {
     return res.status(400).json({
