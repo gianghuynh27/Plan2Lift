@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import type { JwtPayload } from 'jsonwebtoken';
 
 import BaseController from './base.controller';
 import AuthToken from '../models/auth-token.model';
@@ -7,11 +8,24 @@ import emailVerificationService, {
   VerificationEmailCooldownError,
 } from '../services/email-verification.service';
 
+import {
+  REFRESH_TOKEN_COOKIE,
+  createRefreshCookieOptions,
+  hashRefreshToken,
+  refreshTokenCookieOptions,
+} from '../utils/refresh-token.util';
+
 type DuplicateKeyError = {
   code: 11000;
   keyPattern?: Record<string, number>;
 };
 
+function getTokenExpiration(decoded: string | JwtPayload): Date {
+  if (typeof decoded === 'string' || typeof decoded.exp !== 'number') {
+    throw new Error('Refresh token has no expiration');
+  }
+  return new Date(decoded.exp * 1000);
+}
 function isDuplicateKeyError(error: unknown): error is DuplicateKeyError {
   return (
     typeof error === 'object' &&
@@ -140,21 +154,35 @@ class AuthController extends BaseController {
         email: user.email,
       });
 
-      const findToken = await this.model.findOne({ userId: user._id });
+      const decodedRefreshToken = this.jwt.verifyRefreshToken(
+        tokens.refreshToken,
+      );
 
-      if (findToken) {
-        await this.model.findByIdAndUpdate(findToken._id, {
+      const expiresAt = getTokenExpiration(decodedRefreshToken);
+
+      const refreshTokenHash = hashRefreshToken(tokens.refreshToken);
+
+      await this.model.findOneAndUpdate(
+        { userId: user._id },
+        {
           $set: {
-            refreshToken: tokens.refreshToken,
+            refreshToken: refreshTokenHash,
+            expiresAt,
+            revokedAt: null,
           },
-        });
-      } else {
-        const authToken = new this.model({
-          userId: user._id,
-          refreshToken: tokens.refreshToken,
-        });
-        await authToken.save();
-      }
+        },
+        {
+          upsert: true,
+          new: true,
+          setDefaultsOnInsert: true,
+        },
+      );
+
+      res.cookie(
+        REFRESH_TOKEN_COOKIE,
+        tokens.refreshToken,
+        createRefreshCookieOptions(expiresAt),
+      );
 
       this.logger.info('User logged in successfully', {
         userId: user._id.toString(),
@@ -164,7 +192,6 @@ class AuthController extends BaseController {
         message: 'User logged in successfully',
         tokens: {
           accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
         },
       });
     } catch (error) {
@@ -248,8 +275,164 @@ class AuthController extends BaseController {
       return res.status(202).json(acceptedResponse);
     }
   }
-  // async refresh() {}
-  // async logout() {}
+  async refresh(req: Request, res: Response) {
+    const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
+
+    if (typeof refreshToken !== 'string') {
+      return res.status(401).json({
+        message: 'No refresh token provided',
+      });
+    }
+
+    let decodedRefreshToken;
+
+    try {
+      decodedRefreshToken = this.jwt.verifyRefreshToken(refreshToken);
+    } catch {
+      res.clearCookie(REFRESH_TOKEN_COOKIE, refreshTokenCookieOptions);
+
+      this.logger.warn('Refresh rejected: invalid token');
+
+      return res.status(401).json({
+        message: 'Invalid or expired refresh token',
+      });
+    }
+
+    if (
+      typeof decodedRefreshToken === 'string' ||
+      typeof decodedRefreshToken.userId !== 'string'
+    ) {
+      res.clearCookie(REFRESH_TOKEN_COOKIE, refreshTokenCookieOptions);
+
+      return res.status(401).json({
+        message: 'Invalid refresh token',
+      });
+    }
+
+    try {
+      const userModel = this.registry.get('user:model');
+
+      const user = await userModel.findOne({
+        _id: decodedRefreshToken.userId,
+        deletedAt: null,
+        isVerified: true,
+      });
+
+      if (!user) {
+        res.clearCookie(REFRESH_TOKEN_COOKIE, refreshTokenCookieOptions);
+
+        return res.status(401).json({
+          message: 'Refresh session is no longer valid',
+        });
+      }
+
+      const currentTokenHash = hashRefreshToken(refreshToken);
+
+      const newTokens = this.jwt.createTokens({
+        userId: user._id.toString(),
+        username: user.username,
+        email: user.email,
+      });
+
+      const decodedNewRefreshToken = this.jwt.verifyRefreshToken(
+        newTokens.refreshToken,
+      );
+
+      const newExpiresAt = getTokenExpiration(decodedNewRefreshToken);
+
+      const newRefreshTokenHash = hashRefreshToken(newTokens.refreshToken);
+
+      /*
+       * This update succeeds only if the
+       * submitted refresh token is still
+       * the active token in MongoDB.
+       */
+      const rotatedToken = await this.model.findOneAndUpdate(
+        {
+          userId: user._id,
+          refreshToken: currentTokenHash,
+          revokedAt: null,
+          expiresAt: {
+            $gt: new Date(),
+          },
+        },
+        {
+          $set: {
+            refreshToken: newRefreshTokenHash,
+            expiresAt: newExpiresAt,
+          },
+        },
+        {
+          new: true,
+        },
+      );
+
+      if (!rotatedToken) {
+        res.clearCookie(REFRESH_TOKEN_COOKIE, refreshTokenCookieOptions);
+
+        this.logger.warn('Refresh rejected: token is no longer active', {
+          userId: user._id.toString(),
+        });
+
+        return res.status(401).json({
+          message: 'Refresh session is no longer valid',
+        });
+      }
+
+      res.cookie(
+        REFRESH_TOKEN_COOKIE,
+        newTokens.refreshToken,
+        createRefreshCookieOptions(newExpiresAt),
+      );
+
+      this.logger.info('Refresh token rotated', {
+        userId: user._id.toString(),
+      });
+
+      return res.status(200).json({
+        message: 'Session refreshed successfully',
+        tokens: {
+          accessToken: newTokens.accessToken,
+        },
+      });
+    } catch (error) {
+      this.logger.error('Unable to refresh session', {
+        error,
+      });
+
+      return res.status(500).json({
+        message: 'Unable to refresh session',
+      });
+    }
+  }
+  async logout(req: Request, res: Response) {
+    const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
+
+    try {
+      if (typeof refreshToken === 'string') {
+        const refreshTokenHash = hashRefreshToken(refreshToken);
+
+        await this.model.deleteOne({
+          refreshToken: refreshTokenHash,
+        });
+      }
+
+      this.logger.info('User logged out');
+    } catch (error) {
+      this.logger.error('Unable to remove refresh session', {
+        error,
+      });
+    } finally {
+      /*
+       * Clear the browser cookie even if
+       * the database record was already
+       * missing.
+       */
+      res.clearCookie(REFRESH_TOKEN_COOKIE, refreshTokenCookieOptions);
+    }
+
+    return res.status(204).send();
+  }
 
   // async forgotPassword() {}
 

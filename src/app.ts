@@ -1,12 +1,14 @@
 import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 import routes from './routes';
 import appRegistry from './app.registry';
 
 import User from './models/user.model';
 import usersController from './controllers/users.controller';
+import config from './config/config';
 
 const app = express();
 
@@ -14,7 +16,13 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
-app.use(cors());
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: config.clientPublicUrl,
+    credentials: true,
+  }),
+);
 
 // routes
 app.use(routes);

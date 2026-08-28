@@ -5,7 +5,7 @@ import User from '../models/user.model';
 import {
   generateVerificationToken,
   hashVerificationToken,
-} from '../utils/verify-token.util';
+} from '../utils/verify-email-token.util';
 import emailService from './email.service';
 
 type SendVerificationEmailInput = {
