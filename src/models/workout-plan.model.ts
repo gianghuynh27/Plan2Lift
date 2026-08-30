@@ -106,6 +106,12 @@ const workoutPlanSchema = new Schema<IWorkoutPlan>(
   },
 );
 
+workoutPlanSchema.index({
+  userId: 1,
+  deletedAt: 1,
+  createdAt: -1,
+});
+
 const WorkoutPlan: Model<IWorkoutPlan> = model<IWorkoutPlan>(
   'WorkoutPlan',
   workoutPlanSchema,
