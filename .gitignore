@@ -10,3 +10,5 @@ dist
 
 # Local API testing requests
 *.http
+
+AGENT.md

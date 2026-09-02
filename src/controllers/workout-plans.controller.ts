@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 
 import BaseController from './base.controller';
+
 import WorkoutPlan from '../models/workout-plan.model';
+import Exercise from '../models/exercise.model';
 
 import type {
   CreateWorkoutPlanInput,
@@ -11,6 +13,32 @@ import type {
 class WorkoutPlansController extends BaseController {
   constructor() {
     super(WorkoutPlan);
+  }
+
+  private async exercisesAreAvailable(
+    days: CreateWorkoutPlanInput['days'],
+  ): Promise<boolean> {
+    const uniqueExerciseIds = [
+      ...new Set(
+        days.flatMap((day) =>
+          day.exercises.map((exercise) => exercise.exerciseId),
+        ),
+      ),
+    ];
+
+    if (uniqueExerciseIds.length === 0) {
+      return true;
+    }
+
+    const exerciseCount = await Exercise.countDocuments({
+      _id: {
+        $in: uniqueExerciseIds,
+      },
+
+      isArchived: false,
+    });
+
+    return exerciseCount === uniqueExerciseIds.length;
   }
 
   /*
@@ -27,6 +55,20 @@ class WorkoutPlansController extends BaseController {
 
     try {
       const input = req.body as CreateWorkoutPlanInput;
+
+      const exercisesAreAvailable = await this.exercisesAreAvailable(
+        input.days,
+      );
+
+      if (!exercisesAreAvailable) {
+        this.logger.warn('Workout plan contains unavailable exercises', {
+          userId,
+        });
+
+        return res.status(400).json({
+          message: 'One or more exercises are unavailable',
+        });
+      }
 
       const workoutPlan = await WorkoutPlan.create({
         /*
@@ -78,13 +120,15 @@ class WorkoutPlansController extends BaseController {
       const workoutPlans = await WorkoutPlan.find({
         userId,
         deletedAt: null,
-      }).sort({
-        createdAt: -1,
-      });
-      // .populate({
-      //   path: 'days.exercises.exerciseId',
-      //   select: 'name muscleGroup equipment',
-      // });
+      })
+        .sort({
+          createdAt: -1,
+        })
+        .populate({
+          path: 'days.exercises.exerciseId',
+          model: Exercise,
+          select: 'name muscleGroup equipment',
+        });
 
       this.logger.debug('Workout plans retrieved', {
         userId,
@@ -129,11 +173,11 @@ class WorkoutPlansController extends BaseController {
         _id: workoutPlanId,
         userId,
         deletedAt: null,
+      }).populate({
+        path: 'days.exercises.exerciseId',
+        model: Exercise,
+        select: 'name muscleGroup equipment',
       });
-      //   .populate({
-      //     path: 'days.exercises.exerciseId',
-      //     select: 'name muscleGroup equipment',
-      //   });
 
       if (!workoutPlan) {
         return res.status(404).json({
@@ -178,6 +222,18 @@ class WorkoutPlansController extends BaseController {
 
     try {
       const input = req.body as UpdateWorkoutPlanInput;
+
+      if (input.days !== undefined) {
+        const exercisesAreAvailable = await this.exercisesAreAvailable(
+          input.days,
+        );
+
+        if (!exercisesAreAvailable) {
+          return res.status(400).json({
+            message: 'One or more exercises are unavailable',
+          });
+        }
+      }
 
       /*
        * Explicitly construct the update object.
