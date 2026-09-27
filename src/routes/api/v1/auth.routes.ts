@@ -5,7 +5,6 @@ import {
   validateLogin,
   validateRegister,
   validateResendVerification,
-  validateVerificationToken,
 } from '../../../middleware/auth-validation.middleware';
 
 const router = Router();
@@ -18,9 +17,8 @@ router.post(
 router.post('/login', validateLogin, authController.login.bind(authController));
 router.post('/refresh', authController.refresh.bind(authController));
 router.post('/logout', authController.logout.bind(authController));
-router.post(
-  '/verify-email',
-  validateVerificationToken,
+router.get(
+  '/verify-email/:token',
   authController.verifyEmail.bind(authController),
 );
 router.post(

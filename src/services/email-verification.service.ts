@@ -66,16 +66,10 @@ class EmailVerificationService {
         },
       );
       // Url points to front-end verification page and front-end calls vefic
-      const verificationUrl = new URL(
-        '/auth/verify-email',
-        config.clientPublicUrl,
-      );
-
-      verificationUrl.searchParams.set('token', token);
-
       await emailService.sendVerificationEmail(
         email,
-        verificationUrl.toString(),
+        // verificationUrl.toString(),
+        'http://localhost:8000/api/v1/auth/verify-email/' + token,
       );
     } catch (error) {
       if (createdTokenHash) {

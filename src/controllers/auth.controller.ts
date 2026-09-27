@@ -204,9 +204,11 @@ class AuthController extends BaseController {
   }
   async verifyEmail(req: Request, res: Response) {
     try {
-      const { token } = req.body;
-
-      const verified = await emailVerificationService.verifyEmail(token);
+      //const { token } = req.body;
+      const { token } = req.params;
+      const verified = await emailVerificationService.verifyEmail(
+        token as string,
+      );
 
       res.set('Cache-Control', 'no-store');
 
@@ -217,9 +219,10 @@ class AuthController extends BaseController {
         });
       }
 
-      return res.status(200).json({
-        message: 'Email verified successfully',
-      });
+      // return res.status(200).json({
+      //   //message: 'Email verified successfully',
+      // });
+      return res.redirect('http://localhost:5173/auth/login?verified=true');
     } catch (error) {
       this.logger.error('Email verification failed', {
         error,

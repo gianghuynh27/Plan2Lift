@@ -101,20 +101,3 @@ export function validateResendVerification(
 
   return next();
 }
-
-export function validateVerificationToken(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  const { token } = req.body;
-
-  if (typeof token !== 'string' || token.length < 32 || token.length > 256) {
-    return res.status(400).json({
-      code: 'INVALID_VERIFICATION_TOKEN',
-      message: 'Invalid verification token',
-    });
-  }
-
-  return next();
-}
