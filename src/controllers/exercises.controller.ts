@@ -47,6 +47,7 @@ class ExercisesController extends BaseController {
       }
 
       const exercises = await Exercise.find(filter)
+        .select('name muscleGroup bodyPart equipment difficulty category')
         .sort({
           name: 1,
         })

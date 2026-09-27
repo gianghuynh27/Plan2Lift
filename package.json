@@ -9,7 +9,9 @@
     "start": "node ./dist/app.js",
     "dev": "ts-node-dev --files --respawn src/server.ts",
     "prepare": "husky",
-    "lint-staged": "lint-staged"
+    "lint-staged": "lint-staged",
+    "import:exercises": "ts-node --files src/scripts/import-exercises.ts",
+    "import:exercises:dry": "ts-node --files src/scripts/import-exercises.ts --dry-run"
   },
   "keywords": [],
   "author": "",
@@ -51,6 +53,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.8",
     "prettier": "3.9.5",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.0.2",
     "typescript-eslint": "^8.64.0"
