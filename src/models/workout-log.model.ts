@@ -1,39 +1,17 @@
 import { model, Schema, Types, Document, Model } from 'mongoose';
 
-type WorkoutStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
-
-type LoggedExerciseStatus = 'NOT_STARTED' | 'COMPLETED' | 'SKIPPED';
-
 interface ILoggedSet {
   _id: Types.ObjectId;
   weight?: number;
   reps: number;
 }
-// Weight represents optional external load, not body weight.
-interface ILoggedExercise {
-  _id: Types.ObjectId;
-  exerciseId: Types.ObjectId;
-  exerciseName: string;
-  status: LoggedExerciseStatus;
-  sets: ILoggedSet[];
-  notes?: string;
-}
 
 export interface IWorkoutLog extends Document {
   userId: Types.ObjectId;
-
-  workoutPlanId?: Types.ObjectId;
-  planDayId?: Types.ObjectId;
-
-  name: string;
-  status: WorkoutStatus;
-
-  startedAt: Date;
-  completedAt?: Date;
-
-  exercises: ILoggedExercise[];
+  workoutDate: Date;
+  exerciseId: Types.ObjectId;
+  sets: ILoggedSet[];
   notes?: string;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,42 +20,19 @@ const loggedSetSchema = new Schema<ILoggedSet>({
   weight: {
     type: Number,
     min: 0,
+    // Protect writes that bypass request validation, including Infinity.
+    validate: { validator: Number.isFinite, message: 'weight must be finite' },
   },
 
   reps: {
     type: Number,
     required: true,
     min: 1,
-  },
-});
-
-const loggedExerciseSchema = new Schema<ILoggedExercise>({
-  exerciseId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Exercise',
-    required: true,
-  },
-
-  exerciseName: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-
-  status: {
-    type: String,
-    enum: ['NOT_STARTED', 'COMPLETED', 'SKIPPED'],
-    default: 'NOT_STARTED',
-  },
-
-  sets: {
-    type: [loggedSetSchema],
-    default: [],
-  },
-
-  notes: {
-    type: String,
-    trim: true,
+    // Number permits fractions; completed reps must be whole numbers.
+    validate: {
+      validator: Number.isInteger,
+      message: 'reps must be a whole number',
+    },
   },
 });
 
@@ -89,43 +44,24 @@ const workoutLogSchema = new Schema<IWorkoutLog>(
       required: true,
       index: true,
     },
-
-    workoutPlanId: {
-      type: Schema.Types.ObjectId,
-      ref: 'WorkoutPlan',
-    },
-
-    planDayId: {
-      type: Schema.Types.ObjectId,
-    },
-
-    name: {
-      type: String,
+    workoutDate: {
+      type: Date,
       required: true,
-      trim: true,
     },
-
-    status: {
-      type: String,
-      enum: ['IN_PROGRESS', 'COMPLETED', 'ABANDONED'],
-      default: 'IN_PROGRESS',
-      index: true,
+    exerciseId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Exercise',
+      required: true,
     },
-
-    startedAt: {
-      type: Date,
-      default: Date.now,
-    },
-
-    completedAt: {
-      type: Date,
-    },
-
-    exercises: {
-      type: [loggedExerciseSchema],
+    sets: {
+      type: [loggedSetSchema],
       default: [],
+      // An empty array is valid while editing, but not in a saved log.
+      validate: {
+        validator: (sets: ILoggedSet[]) => sets.length > 0,
+        message: 'Log at least one set',
+      },
     },
-
     notes: {
       type: String,
       trim: true,

@@ -76,7 +76,6 @@ class WorkoutPlansController extends BaseController {
          * It always comes from the access token.
          */
         userId,
-
         name: input.name,
         description: input.description,
         days: input.days,

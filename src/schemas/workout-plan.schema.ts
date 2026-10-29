@@ -19,6 +19,8 @@ const plannedExerciseSchema = z.strictObject({
   targetSets: z.number().int().min(1, 'targetSets must be at least 1'),
 
   targetReps: z.number().int().min(1, 'targetReps must be at least 1'),
+
+  targetWeight: z.number().min(0, 'targetWeight must be at least 0').optional(),
 });
 
 const workoutDaySchema = z.strictObject({

@@ -6,6 +6,7 @@ interface IPlannedExercise {
 
   targetSets: number;
   targetReps: number;
+  targetWeight?: number; // pounds; optional
 }
 
 interface IWorkoutDay {
@@ -45,6 +46,11 @@ const plannedExerciseSchema = new Schema<IPlannedExercise>({
     type: Number,
     required: true,
     min: 1,
+  },
+
+  targetWeight: {
+    type: Number,
+    min: 0,
   },
 });
 
